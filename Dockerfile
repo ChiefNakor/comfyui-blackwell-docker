@@ -1,16 +1,25 @@
 # ComfyUI Docker Image with Blackwell NVFP4 Support
 # Optimized for NVIDIA Blackwell GPUs (RTX 50 series)
 
-# Build arguments for version pinning
+# Build arguments for version pinning --Global Scope--
 ARG CUDA_BASE_IMAGE=nvidia/cuda:13.1.0-devel-ubuntu24.04
 ARG TORCH_WHEEL_URL=https://download.pytorch.org/whl/cu130/torch-2.10.0%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl
 ARG TORCHVISION_WHEEL_URL=https://download.pytorch.org/whl/cu130/torchvision-0.25.0%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl
 ARG TORCHAUDIO_WHEEL_URL=https://download.pytorch.org/whl/cu130/torchaudio-2.10.0%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl
 ARG COMFYUI_BRANCH=master
 ARG SAGEATTENTION_VERSION=v2
+ARG SAGEATTENTION_USE=1
 
 FROM ${CUDA_BASE_IMAGE}
-
+# Re-declaring these ARGs so they are available inside this build stage
+ARG SAGEATTENTION_VERSION
+ARG TORCH_WHEEL_URL
+ARG TORCHVISION_WHEEL_URL
+ARG TORCHAUDIO_WHEEL_URL
+ARG COMFYUI_BRANCH
+# Pass these to the runtime so the CMD can see it later
+ENV SAGEATTENTION_VERSION=${SAGEATTENTION_VERSION}
+ENV SAGEATTENTION_USE=${SAGEATTENTION_USE}
 # Setup environment for non-interactive installs
 ENV DEBIAN_FRONTEND=noninteractive
 # Allow pip to install in system Python (we're in a container, it's fine)
@@ -136,4 +145,8 @@ EXPOSE 8188
 ENTRYPOINT ["/app/startup.sh"]
 
 # Default command - can be overridden in docker-compose.yml
-CMD ["python3", "main.py", "--listen", "0.0.0.0"]
+CMD if [ "$SAGEATTENTION_USE" != "0" ] && { [ "$SAGEATTENTION_VERSION" = "v2" ] || [ "$SAGEATTENTION_VERSION" = "v3" ]; }; then \
+      exec python3 main.py --listen 0.0.0.0 --use-sage-attention; \
+    else \
+      exec python3 main.py --listen 0.0.0.0; \
+    fi

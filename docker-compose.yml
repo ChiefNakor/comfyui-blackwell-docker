@@ -10,6 +10,7 @@ services:
         - TORCHAUDIO_WHEEL_URL=${TORCHAUDIO_WHEEL_URL:-https://download.pytorch.org/whl/cu130/torchaudio-2.10.0%2Bcu130-cp312-cp312-manylinux_2_28_x86_64.whl}
         - COMFYUI_BRANCH=${COMFYUI_BRANCH:-master}
         - SAGEATTENTION_VERSION=${SAGEATTENTION_VERSION:-v2}
+        - SAGEATTENTION_USE=${SAGEATTENTION_USE:-1}
     
     container_name: comfyui
     
